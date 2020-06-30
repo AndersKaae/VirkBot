@@ -1,0 +1,6 @@
+.DS_Store
+*.code-workspace
+.vscode/
+chromedriver
+__pycache__/
+Pipfile
