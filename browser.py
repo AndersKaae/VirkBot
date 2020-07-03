@@ -3,9 +3,9 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.select import Select
 import time
 import pickle
-from data import Company, Owner, Manager
+from data import Company, RealOwner, LegalOwner, Manager
 
-def browser(url):
+def browser():
     options = Options()
 	# Following two lines makes the chrome browser not show
 	#options.add_argument('--headless')
@@ -19,7 +19,7 @@ def browser(url):
     browser = webdriver.Chrome('./chromedriver', chrome_options=options)
 
     # Getting the first URL
-    browser.get(url=url)
+    browser.get("https://indberet.virk.dk/nemlogin/login?f=/integration/ERST/Start_virksomhed")
 
     while not "virksomhedsregistrering/betingelser" in browser.current_url:
         time.sleep(1)
@@ -99,11 +99,21 @@ def browser(url):
 
     # ----- Page 4 -----
 
+    browser.find_elements_by_class_name('btn-group')[0].click()
+    browser.find_elements_by_class_name('linkCprPerson')[0].click()
+    
+    time.sleep(1)
+    browser.find_element_by_id('legaleEjere_cprPerson_navn').send_keys(r1.name)
+    browser.find_element_by_id('legaleEjere_cprPerson_cprNummer').send_keys(r1.cpr)
+    browser.find_element_by_id("legaleEjere_erReelEjer").click()
+    browser.find_element_by_id('legaleEjere_kapitalandelReelEjer').send_keys(r1.percentage)
+    browser.find_element_by_id('legaleEjere_stemmeandelReelEjer').send_keys(r1.percentage)
+    browser.find_element_by_id("ejerTilfoejKnap").click()
+    
     print('DONE')
     return browser.page_source
 
-o1 = Owner("person_with_cpr", "Anders Lyager Kaae", "030382-1163")
+o1 = LegalOwner("person_with_cpr", "Anders Lyager Kaae", "030382-1163")
+r1 = RealOwner("person_with_cpr", "Anders Lyager Kaae", "030382-1163", False, True, "100")
 l1 = Manager("person_with_cpr", "Anders Lyager Kaae", "030382-1163")
 c1 = Company("Testselskabet ApS", "NULL", "Trommesalen 4, 5. th , 1614 København V", "info@legaldesk.dk", False, "01-07-2020", "10-07-2020", "Selskabets formål er at være awesome.", "Selskabet tegnes af en direktør.", "90.01.20", "40000", "01-01", "31-12", "2021")
-
-browser("https://indberet.virk.dk/nemlogin/login?f=/integration/ERST/Start_virksomhed")

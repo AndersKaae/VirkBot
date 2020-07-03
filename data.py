@@ -15,11 +15,19 @@ class Company:
     self.fiscalend = fiscalend
     self.firstfiscalend = firstfiscalend
 
-class Owner:
+class LegalOwner:
     def __init__(self, kind, name, cpr):
         self.kind = kind
         self.name = name
         self.cpr = cpr
+
+class RealOwner:
+    def __init__(self, kind, name, cpr, legalowner, realowner, percentage):
+        self.legalowner = legalowner
+        self.realowner = realowner
+        self.name = name
+        self.cpr = cpr
+        self.percentage = percentage
 
 class Manager:
     def __init__(self, kind, name, cpr):
