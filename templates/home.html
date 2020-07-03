@@ -1,34 +1,21 @@
-<html>
-    <head>
-        <title>Bootstrap Example</title>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-      </head>
-    <body>
-        <div class="container">
-            <div class="jumbotron jumbotron-fluid">
-                <div class="container">
-                  <h1 class="display-4">VirkBot</h1>
-                  <p class="lead">Resistance is futile, you will all be assimilated.</p>
-                </div>
-              </div>
+{% extends "layout.html" %}
+{% block content %}
             <form action="/" method="post">
-                <label for="cars">Choose reg:</label>
-                <select name="cars" id="cars">
-                    <option value="volvo">ApS</option>
-                </select>
-                <div class="form-group">
+                <div class="form-group"></div>
+                    <label for="cars">Choose reg:</label>
+                    <select name="cars" id="cars">
+                        <option value="volvo">ApS</option>
+                    </select>
                     <label for="comment">JSON:</label>
-                    <textarea class="form-control" rows="5" id="comment" value="Inser JSON"></textarea>
+                    <textarea class="form-control" rows="10" name="textfield" value="Inser JSON"></textarea>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <p style="color: red">{{ message }}</p>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
                 </div>
-                <button type="submit" class="btn btn-primary">Submit</button>
-            </form>
-            {% for message in get_flashed_messages() %}
-                <p>{{ message }}</p>
-            {% endfor %}
-        </div>
-    </body>
-</html>
+            </form>     
+{% endblock content %}

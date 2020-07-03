@@ -1,11 +1,12 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.select import Select
+import os
 import time
 import pickle
 from data import Company, RealOwner, LegalOwner, Manager
 
-def browser():
+def browser(o1, r1, l1, c1):
     options = Options()
 	# Following two lines makes the chrome browser not show
 	#options.add_argument('--headless')
@@ -90,6 +91,8 @@ def browser():
     browser.find_element_by_id('regnskab_regnskabsaar_startDato-field').send_keys(c1.fiscalstart)
     browser.find_element_by_id('regnskab_regnskabsaar_slutDato-field').send_keys(c1.fiscalend)
 
+    #Første regnskabsår?
+
     # Revisor
     browser.find_element_by_id("FRAVALGT").click()
     time.sleep(1)
@@ -112,8 +115,3 @@ def browser():
     
     print('DONE')
     return browser.page_source
-
-o1 = LegalOwner("person_with_cpr", "Anders Lyager Kaae", "030382-1163")
-r1 = RealOwner("person_with_cpr", "Anders Lyager Kaae", "030382-1163", False, True, "100")
-l1 = Manager("person_with_cpr", "Anders Lyager Kaae", "030382-1163")
-c1 = Company("Testselskabet ApS", "NULL", "Trommesalen 4, 5. th , 1614 København V", "info@legaldesk.dk", False, "01-07-2020", "10-07-2020", "Selskabets formål er at være awesome.", "Selskabet tegnes af en direktør.", "90.01.20", "40000", "01-01", "31-12", "2021")
