@@ -107,6 +107,7 @@ def CreateLegalOwners(jsondata):
 
 # Resolves an owner i.e. "ejerb" into an integer "1"
 def OwnerNumber(data):
+    print(data)
     n = 0
     letter = data[-1]
     abc = ["a", "b", "c", "d", "e", "f", "g"]
@@ -128,7 +129,7 @@ def CreateManagement(jsondata, ownerList, boardList):
         managementList[i].board = False
         managementList[i].chairman = False
         # If executive is a known owner
-        if jsondata['medlemmerledelse']['direktion_medlema_navn'] == "":
+        if jsondata['medlemmerledelse']['direktion_medlem' + abc[i] + '_navn'] == "":
             ownerletter = OwnerNumber(jsondata['medlemmerledelse']['direktion_medlem' + abc[i] + '_radio'])
             managementList[i].name = ownerList[ownerletter].name
             managementList[i].cpr = ownerList[ownerletter].cpr
