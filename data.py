@@ -1,7 +1,8 @@
 import json
+import re
 
 class Company:
-  def __init__(self, name, companytype, secondaryName, adress, adress2, zipcode, city, email, advertising, signingDate, effectDate, purpose, powertobind, industrycode, capital, fiscalstart, fiscalend):
+  def __init__(self, name, companytype, secondaryName, adress, adress2, zipcode, city, email, advertising, signingDate, effectDate, purpose, powertobind, industrycode, capital, fiscalstart, fiscalend, audited, accountantname, accountantcvr):
     self.name = name
     self.companytype = companytype
     self.secondaryName = secondaryName
@@ -19,6 +20,9 @@ class Company:
     self.capital = capital
     self.fiscalstart = fiscalstart
     self.fiscalend = fiscalend
+    self.audited = audited
+    self.accountantname =  accountantname
+    self.accountantcvr = accountantcvr
 
 class LegalOwner:
     def __init__(self, name, cpr, cvr, adress, zipcode, city, country):
@@ -37,26 +41,28 @@ class RealOwner:
         self.cpr = cpr
         self.percentage = percentage
 
-class Executive:
-    def __init__(self, name, cpr, adress, zipcode, city, country, president):
+class Management:
+    def __init__(self, name, cpr, adress, zipcode, city, country, executive, president, board, chairman):
         self.name = name
         self.cpr = cpr
         self.adress = adress
         self.zipcode = zipcode
         self.city = city
         self.country = country
+        self.executive = executive
         self.president = president
+        self.board = board
+        self.chairman = chairman
 
 class Board:
-    def __init__(self, name, cpr, adress, zipcode, city, country, president):
+    def __init__(self, name, cpr, adress, zipcode, city, country, chairman):
         self.name = name
         self.cpr = cpr
         self.adress = adress
         self.zipcode = zipcode
         self.city = city
         self.country = country
-        self.president = president
-
+        self.chairman = chairman
 
 def JsonParser(data):
     # Parse JSON data
@@ -65,15 +71,16 @@ def JsonParser(data):
     # Create owners
     legalOwnerList = CreateLegalOwners(jsondata)
 
+    # Create board, only used for easy consolidation into Management class
+    boardList = CreateBoard(jsondata, legalOwnerList)
+
     # Create management
-    executiveList = CreateExecutive(jsondata, ownerList)
+    managementList = CreateManagement(jsondata, legalOwnerList, boardList)
 
     # Create company
     company = CreateCompany(jsondata, legalOwnerList)
 
-
-
-    return legalOwnerList, company
+    return legalOwnerList, managementList, company, jsondata
 
 def CreateLegalOwners(jsondata):
     ownerList = ["owner1", "owner2", "owner3", "owner4", "owner5", "owner6"]
@@ -81,13 +88,19 @@ def CreateLegalOwners(jsondata):
     i = 0
     while i < int(jsondata['ejere']['antalejer_radio']):
         ownerList[i] = LegalOwner("", "", "", "", "", "", "")
-        ownerList[i].name = jsondata['ejere']['ejer' + abc[i] + '_navn']
+        if jsondata['ejere']['ejer' + abc[i] + '_navn'] == "":
+            ownerList[i].name = jsondata['ejere']['ejer' + abc[i] + '_selskabsnavn']
+        else:
+            ownerList[i].name = jsondata['ejere']['ejer' + abc[i] + '_navn']
         ownerList[i].cpr = jsondata['oplysninger']['ejer' + abc[i] + '_cpr']
         ownerList[i].cvr = jsondata['oplysninger']['ejer' + abc[i] + '_cvr']
         ownerList[i].adress = jsondata['oplysninger']['ejer' + abc[i] + '_adresse']
         ownerList[i].zipcode = jsondata['oplysninger']['ejer' + abc[i] + '_postnummer']
         ownerList[i].city = jsondata['oplysninger']['ejer' + abc[i] + '_by']
-        ownerList[i].country = jsondata['oplysninger']['ejer' + abc[i] + '_land']
+        if jsondata['oplysninger']['ejer' + abc[i] + '_land'] == 'DK':
+            ownerList[i].country = 'Danmark'
+        else:
+            ownerList[i].country = jsondata['oplysninger']['ejer' + abc[i] + '_landenavn']
         #print(ownerList[i].__dict__)
         i+=1
     return ownerList
@@ -103,22 +116,118 @@ def OwnerNumber(data):
         n+=1
     return numberonlist
 
-def CreateExecutive(jsondata, ownerList):
-    executiveList = ["executive1", "executive2", "executive3", "executive4"]
+def CreateManagement(jsondata, ownerList, boardList):
+    managementList = ["executive1", "executive2", "executive3", "executive4", "executive4", "executive6", "executive7", "executive8", "executive9", "executive10"]
     abc = ["a", "b", "c", "d", "e", "f", "g"]
     i = 0
+    # Looping through the CEOs
     while i < int(jsondata['medlemmerledelse']['valg_direktorer']):
-        executiveList[i] = Executive("","","","","","","")
+        managementList[i] = Management("","","","","","","","","","")
+        managementList[i].executive = True
+        # Defaulting the board and chairman value to False
+        managementList[i].board = False
+        managementList[i].chairman = False
+        # If executive is a known owner
         if jsondata['medlemmerledelse']['direktion_medlema_navn'] == "":
             ownerletter = OwnerNumber(jsondata['medlemmerledelse']['direktion_medlem' + abc[i] + '_radio'])
-            executiveList[i].name = ownerList[ownerletter].name
-            executiveList[i].cpr = ownerList[ownerletter].cpr
-            executiveList[i].adress = ownerList[ownerletter].adress
-    i+=1
+            managementList[i].name = ownerList[ownerletter].name
+            managementList[i].cpr = ownerList[ownerletter].cpr
+            managementList[i].adress = ownerList[ownerletter].adress
+            managementList[i].zipcode = ownerList[ownerletter].zipcode
+            managementList[i].city = ownerList[ownerletter].city
+            managementList[i].country = ownerList[ownerletter].country
+        # If executive is a previous unknown person
+        else:
+            managementList[i].name = jsondata['medlemmerledelse']['direktion_medlem' + abc[i] + '_navn']
+            managementList[i].cpr = jsondata['oplysninger']['direktion' + abc[i] + '_cpr']
+            managementList[i].adress = jsondata['oplysninger']['direktion' + abc[i] + '_adresse']
+            managementList[i].zipcode = jsondata['oplysninger']['direktion' + abc[i] + '_postnummer']
+            managementList[i].city = jsondata['oplysninger']['direktion' + abc[i] + '_by']
+            if jsondata['oplysninger']['direktion' + abc[i] + '_land'] == 'DK':
+                managementList[i].country = 'Danmark'
+            else:
+                managementList[i].country = jsondata['oplysninger']['direktion' + abc[i] + '_landenavn']
+        if i == 0 and int(jsondata['medlemmerledelse']['valg_direktorer']) > 1:
+            managementList[i].president = True
+        else:
+            managementList[i].president = False
+        i+=1
+
+    # Creating list of names
+    executiveNameList = []
+    for item in managementList:
+        try:
+            executiveNameList.append(item.name)
+        except:
+            pass
+
+    # Looping through the Board
+    if jsondata['medlemmerledelse']['valg_bestyrelse'] != "":
+        n = 0
+        while n < int(jsondata['medlemmerledelse']['valg_bestyrelse']):
+            # If know editing know entity
+            if boardList[n].name in executiveNameList:
+                numberInList = executiveNameList.index(boardList[n].name)
+                managementList[numberInList].board = True
+                managementList[numberInList].chairman = boardList[n].chairman
+            # If unknow creating new entity
+            else:
+                
+                managementList[i] = Management("","","","","","","","","","")
+                managementList[i].name = boardList[n].name
+                managementList[i].cpr = boardList[n].cpr
+                managementList[i].adress = boardList[n].adress
+                managementList[i].zipcode = boardList[n].zipcode
+                managementList[i].city = boardList[n].city
+                managementList[i].country = boardList[n].country
+                managementList[i].chairman = boardList[n].chairman
+                managementList[i].board = True
+                managementList[i].executive = False
+                managementList[i].president = False
+                i+=1
+            n+=1
+
+    # Removed all items that are strings and thus not instances of a class
+    managementList = [x for x in managementList if not isinstance(x, str)]
+
+    return managementList
+
+def CreateBoard(jsondata, ownerList):
+    boardList = ["boardmember1", "boardmember2", "boardmember3", "boardmember4", "boardmember5", "boardmember6"]
+    abc = ["a", "b", "c", "d", "e", "f", "g"]
+    i = 0
+    if jsondata['medlemmerledelse']['valg_bestyrelse'] != "":
+        while i < int(jsondata['medlemmerledelse']['valg_bestyrelse']):
+            boardList[i] = Board("","","","","","","")
+            if jsondata['medlemmerledelse']['bestyrelse_medlema_navn'] == "":
+                ownerletter = OwnerNumber(jsondata['medlemmerledelse']['bestyrelse_medlem' + abc[i] + '_radio'])
+                boardList[i].name = ownerList[ownerletter].name
+                boardList[i].cpr = ownerList[ownerletter].cpr
+                boardList[i].adress = ownerList[ownerletter].adress
+                boardList[i].zipcode = ownerList[ownerletter].zipcode
+                boardList[i].city = ownerList[ownerletter].city
+                boardList[i].country = ownerList[ownerletter].country
+            else:
+                boardList[i].name = jsondata['medlemmerledelse']['bestyrelse_medlem' + abc[i] + '_navn']
+                boardList[i].cpr = jsondata['oplysninger']['bestyrelse' + abc[i] + '_cpr']
+                boardList[i].adress = jsondata['oplysninger']['bestyrelse' + abc[i] + '_adresse']
+                boardList[i].zipcode = jsondata['oplysninger']['bestyrelse' + abc[i] + '_postnummer']
+                boardList[i].city = jsondata['oplysninger']['bestyrelse' + abc[i] + '_by']
+                if jsondata['oplysninger']['bestyrelse' + abc[i] + '_land'] == 'DK':
+                    boardList[i].country = 'Danmark'
+                else:
+                    boardList[i].country = jsondata['oplysninger']['bestyrelse' + abc[i] + '_landenavn']
+            if i == 0 and int(jsondata['medlemmerledelse']['valg_bestyrelse']) > 1:
+                boardList[i].chairman = True
+            else:
+                boardList[i].chairman = False
+            #print(boardList[i].__dict__)
+            i+=1
+    return boardList
 
 def CreateCompany(jsondata, ownerList):
     # Instatiate the class
-    company = Company("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
+    company = Company("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
     
     # Name and type
     company.name = jsondata['navn']['navn_navn']
@@ -144,10 +253,10 @@ def CreateCompany(jsondata, ownerList):
     
     # signing and date of effect
     if jsondata['startdato']['dato_radio'] == 'nu':
-        company.signingDate = jsondata['startdato']['dato_radio']
-        company.effectDate = jsondata['startdato']['dato_radio']
+        company.signingDate = jsondata['startdato']['dato_dagsdato']
+        company.effectDate = jsondata['startdato']['dato_dagsdato']
     else:
-        company.signingDate = jsondata['startdato']['dato_radio']
+        company.signingDate = jsondata['startdato']['dato_dagsdato']
         company.effectDate = jsondata['startdato']['dato_dato']
 
     # Company purpose
@@ -157,17 +266,21 @@ def CreateCompany(jsondata, ownerList):
         company.purpose = jsondata['formaal']['formaal_formaal']
 
     # Tegningsregel
-    company.powertobind = 'MISSING'
+    company.powertobind = CreatePowerToBind(jsondata)
 
     # Industry code
-    company.industrycode = jsondata['branche']['branche_branche']
+    industry = jsondata['branche']['branche_branche']
+    if len(re.findall(r'\d{6}', industry)) > 0:
+        company.industrycode = re.findall(r'\d{6}', industry)[0]
+    if len(re.findall(r'\b\d{2}\.\d{2}\.\d{2}\b', industry)) > 0:
+        company.industrycode = re.findall(r'\b\d{2}\.\d{2}\.\d{2}\b', industry)[0]
 
     # Company capital
-    capital = []
     abc = ["a", "b", "c", "d", "e", "f", "g"]
+    capital = 0
     i = 0
     while i < int(jsondata['ejere']['antalejer_radio']):
-        capital.append(jsondata['kapital']['ejer' + abc[i] + '_nominel'])
+        capital = capital + int(jsondata['kapital']['ejer' + abc[i] + '_nominel'])
         i+=1
     company.capital = capital
 
@@ -177,7 +290,35 @@ def CreateCompany(jsondata, ownerList):
     end = (int(jsondata['arsrapport']['regnskabsaar_maaned']) - 13)*-1
     company.fiscalend = str(numberOfDays[end - 1]) + "-" + str(end) 
 
-    #print(company.__dict__)
+    # Accountant
+    if jsondata['arsrapport']['revisor_radio'] == "nej":
+        company.audited = False
+    else:
+        company.audited = True
+        company.accountantname = jsondata['arsrapport']['revisor_navn']
+        company.accountantcvr = jsondata['arsrapport']['revisor_cvr']
     return company
 
-JsonParser('{"introduktion":{"type_parameter":"","type_id":"ApS"},"type":{"radio_radio":"ApS"},"navn":{"navn_navn":"Nitro rengøring","binavn_radio":"nej","binavn_antal":"","binavna_binavn":"Fake Binavn","binavnb_binavn":"","binavnc_binavn":"","binavnd_binavn":"","binavne_binavn":""},"formaal":{"formaal_radio":"generel","formaal_formaal":""},"ejere":{"antalejer_radio":"1","ejera_type":"person","ejera_navn":"Dennis Bjernemose","ejera_selskabsnavn":"","ejerb_type":"","ejerb_navn":"","ejerb_selskabsnavn":"","ejerc_type":"","ejerc_navn":"","ejerc_selskabsnavn":"","ejerd_type":"","ejerd_navn":"","ejerd_selskabsnavn":"","ejere_type":"","ejere_navn":"","ejere_selskabsnavn":"","ejerf_type":"","ejerf_navn":"","ejerf_selskabsnavn":""},"kapital":{"ejera_nominel":"40000","ejerb_nominel":"","ejerc_nominel":"","ejerd_nominel":"","ejere_nominel":"","ejerf_nominel":""},"typeledelse":{"entostrenget_radio":"direktion"},"medlemmerledelse":{"valg_direktorer":"1","valg_bestyrelse":"","direktion_medlema_radio":"ejera","direktion_medlema_navn":"","direktion_medlemb_radio":"","direktion_medlemb_navn":"","direktion_medlemc_radio":"","direktion_medlemc_navn":"","direktion_medlemd_radio":"","direktion_medlemd_navn":"","bestyrelse_medlema_radio":"","bestyrelse_medlema_navn":"","bestyrelse_medlemb_radio":"","bestyrelse_medlemb_navn":"","bestyrelse_medlemc_radio":"","bestyrelse_medlemc_navn":"","bestyrelse_medlemd_radio":"","bestyrelse_medlemd_navn":"","bestyrelse_medleme_radio":"","bestyrelse_medleme_navn":"","bestyrelse_medlemf_radio":"","bestyrelse_medlemf_navn":""},"tegningsret":{"direktion_vanskeligt_to":"","direktion_vanskeligt_flere":"","bestyrelse_endirektor":""},"arsrapport":{"regnskabsaar_maaned":"1","revisor_radio":"nej","revisor_navn":"","revisor_cvr":""},"startdato":{"dato_radio":"nu","dato_dagsdato":"02.07.2020","dato_dato":""},"selskabsregistrering":{"registrering_radio":"ja"},"oplysninger":{"ejera_cpr":"210571-2629","ejera_cvr":"","ejera_stiftelse":"","ejera_adresse":"Rentemestervej 9E, ST TV","ejera_postnummer":"2400","ejera_by":"København NV","ejera_land":"DK","ejera_landenavn":"","ejera_reel_radio":"","ejera_reel_reel1_radio":"","ejera_reel_reel1_navn":"","ejera_reel_reel1_cpr":"","ejera_reel_reel1_adresse":"","ejera_reel_reel1_postnummer":"","ejera_reel_reel1_by":"","ejera_reel_reel1_land":"DK","ejera_reel_reel1_landenavn":"","ejera_reel_reel2_radio":"","ejera_reel_reel2_navn":"","ejera_reel_reel2_cpr":"","ejera_reel_reel2_adresse":"","ejera_reel_reel2_postnummer":"","ejera_reel_reel2_by":"","ejera_reel_reel2_land":"DK","ejera_reel_reel2_landenavn":"","ejera_reel_reel3_radio":"","ejera_reel_reel3_navn":"","ejera_reel_reel3_cpr":"","ejera_reel_reel3_adresse":"","ejera_reel_reel3_postnummer":"","ejera_reel_reel3_by":"","ejera_reel_reel3_land":"DK","ejera_reel_reel3_landenavn":"","ejera_data_cvr":"","ejera_data_adresse":"","ejera_data_postnummer":"","ejera_data_by":"","ejera_data_land":"","ejerb_cpr":"","ejerb_cvr":"","ejerb_stiftelse":"","ejerb_adresse":"","ejerb_postnummer":"","ejerb_by":"","ejerb_land":"DK","ejerb_landenavn":"","ejerb_reel_radio":"","ejerb_reel_reel1_radio":"","ejerb_reel_reel1_navn":"","ejerb_reel_reel1_cpr":"","ejerb_reel_reel1_adresse":"","ejerb_reel_reel1_postnummer":"","ejerb_reel_reel1_by":"","ejerb_reel_reel1_land":"DK","ejerb_reel_reel1_landenavn":"","ejerb_reel_reel2_radio":"","ejerb_reel_reel2_navn":"","ejerb_reel_reel2_cpr":"","ejerb_reel_reel2_adresse":"","ejerb_reel_reel2_postnummer":"","ejerb_reel_reel2_by":"","ejerb_reel_reel2_land":"DK","ejerb_reel_reel2_landenavn":"","ejerb_reel_reel3_radio":"","ejerb_reel_reel3_navn":"","ejerb_reel_reel3_cpr":"","ejerb_reel_reel3_adresse":"","ejerb_reel_reel3_postnummer":"","ejerb_reel_reel3_by":"","ejerb_reel_reel3_land":"DK","ejerb_reel_reel3_landenavn":"","ejerb_data_cvr":"","ejerb_data_adresse":"","ejerb_data_postnummer":"","ejerb_data_by":"","ejerb_data_land":"","ejerc_cpr":"","ejerc_cvr":"","ejerc_stiftelse":"","ejerc_adresse":"","ejerc_postnummer":"","ejerc_by":"","ejerc_land":"DK","ejerc_landenavn":"","ejerc_reel_radio":"","ejerc_reel_reel1_radio":"","ejerc_reel_reel1_navn":"","ejerc_reel_reel1_cpr":"","ejerc_reel_reel1_adresse":"","ejerc_reel_reel1_postnummer":"","ejerc_reel_reel1_by":"","ejerc_reel_reel1_land":"DK","ejerc_reel_reel1_landenavn":"","ejerc_reel_reel2_radio":"","ejerc_reel_reel2_navn":"","ejerc_reel_reel2_cpr":"","ejerc_reel_reel2_adresse":"","ejerc_reel_reel2_postnummer":"","ejerc_reel_reel2_by":"","ejerc_reel_reel2_land":"DK","ejerc_reel_reel2_landenavn":"","ejerc_reel_reel3_radio":"","ejerc_reel_reel3_navn":"","ejerc_reel_reel3_cpr":"","ejerc_reel_reel3_adresse":"","ejerc_reel_reel3_postnummer":"","ejerc_reel_reel3_by":"","ejerc_reel_reel3_land":"DK","ejerc_reel_reel3_landenavn":"","ejerc_data_cvr":"","ejerc_data_adresse":"","ejerc_data_postnummer":"","ejerc_data_by":"","ejerc_data_land":"","ejerd_cpr":"","ejerd_cvr":"","ejerd_stiftelse":"","ejerd_adresse":"","ejerd_postnummer":"","ejerd_by":"","ejerd_land":"DK","ejerd_landenavn":"","ejerd_reel_radio":"","ejerd_reel_reel1_radio":"","ejerd_reel_reel1_navn":"","ejerd_reel_reel1_cpr":"","ejerd_reel_reel1_adresse":"","ejerd_reel_reel1_postnummer":"","ejerd_reel_reel1_by":"","ejerd_reel_reel1_land":"DK","ejerd_reel_reel1_landenavn":"","ejerd_reel_reel2_radio":"","ejerd_reel_reel2_navn":"","ejerd_reel_reel2_cpr":"","ejerd_reel_reel2_adresse":"","ejerd_reel_reel2_postnummer":"","ejerd_reel_reel2_by":"","ejerd_reel_reel2_land":"DK","ejerd_reel_reel2_landenavn":"","ejerd_reel_reel3_radio":"","ejerd_reel_reel3_navn":"","ejerd_reel_reel3_cpr":"","ejerd_reel_reel3_adresse":"","ejerd_reel_reel3_postnummer":"","ejerd_reel_reel3_by":"","ejerd_reel_reel3_land":"DK","ejerd_reel_reel3_landenavn":"","ejerd_data_cvr":"","ejerd_data_adresse":"","ejerd_data_postnummer":"","ejerd_data_by":"","ejerd_data_land":"","ejere_cpr":"","ejere_cvr":"","ejere_stiftelse":"","ejere_adresse":"","ejere_postnummer":"","ejere_by":"","ejere_land":"DK","ejere_landenavn":"","ejere_reel_radio":"","ejere_reel_reel1_radio":"","ejere_reel_reel1_navn":"","ejere_reel_reel1_cpr":"","ejere_reel_reel1_adresse":"","ejere_reel_reel1_postnummer":"","ejere_reel_reel1_by":"","ejere_reel_reel1_land":"DK","ejere_reel_reel1_landenavn":"","ejere_reel_reel2_radio":"","ejere_reel_reel2_navn":"","ejere_reel_reel2_cpr":"","ejere_reel_reel2_adresse":"","ejere_reel_reel2_postnummer":"","ejere_reel_reel2_by":"","ejere_reel_reel2_land":"DK","ejere_reel_reel2_landenavn":"","ejere_reel_reel3_radio":"","ejere_reel_reel3_navn":"","ejere_reel_reel3_cpr":"","ejere_reel_reel3_adresse":"","ejere_reel_reel3_postnummer":"","ejere_reel_reel3_by":"","ejere_reel_reel3_land":"DK","ejere_reel_reel3_landenavn":"","ejere_data_cvr":"","ejere_data_adresse":"","ejere_data_postnummer":"","ejere_data_by":"","ejere_data_land":"","ejerf_cpr":"","ejerf_cvr":"","ejerf_stiftelse":"","ejerf_adresse":"","ejerf_postnummer":"","ejerf_by":"","ejerf_land":"DK","ejerf_landenavn":"","ejerf_reel_radio":"","ejerf_reel_reel1_radio":"","ejerf_reel_reel1_navn":"","ejerf_reel_reel1_cpr":"","ejerf_reel_reel1_adresse":"","ejerf_reel_reel1_postnummer":"","ejerf_reel_reel1_by":"","ejerf_reel_reel1_land":"DK","ejerf_reel_reel1_landenavn":"","ejerf_reel_reel2_radio":"","ejerf_reel_reel2_navn":"","ejerf_reel_reel2_cpr":"","ejerf_reel_reel2_adresse":"","ejerf_reel_reel2_postnummer":"","ejerf_reel_reel2_by":"","ejerf_reel_reel2_land":"DK","ejerf_reel_reel2_landenavn":"","ejerf_reel_reel3_radio":"","ejerf_reel_reel3_navn":"","ejerf_reel_reel3_cpr":"","ejerf_reel_reel3_adresse":"","ejerf_reel_reel3_postnummer":"","ejerf_reel_reel3_by":"","ejerf_reel_reel3_land":"DK","ejerf_reel_reel3_landenavn":"","ejerf_data_cvr":"","ejerf_data_adresse":"","ejerf_data_postnummer":"","ejerf_data_by":"","ejerf_data_land":"","direktiona_cpr":"","direktiona_adresse":"","direktiona_postnummer":"","direktiona_by":"","direktiona_land":"DK","direktiona_landenavn":"","direktionb_cpr":"","direktionb_adresse":"","direktionb_postnummer":"","direktionb_by":"","direktionb_land":"DK","direktionb_landenavn":"","direktionc_cpr":"","direktionc_adresse":"","direktionc_postnummer":"","direktionc_by":"","direktionc_land":"DK","direktionc_landenavn":"","direktiond_cpr":"","direktiond_adresse":"","direktiond_postnummer":"","direktiond_by":"","direktiond_land":"DK","direktiond_landenavn":"","bestyrelsea_cpr":"","bestyrelsea_adresse":"","bestyrelsea_postnummer":"","bestyrelsea_by":"","bestyrelsea_land":"DK","bestyrelsea_landenavn":"","bestyrelseb_cpr":"","bestyrelseb_adresse":"","bestyrelseb_postnummer":"","bestyrelseb_by":"","bestyrelseb_land":"DK","bestyrelseb_landenavn":"","bestyrelsec_cpr":"","bestyrelsec_adresse":"","bestyrelsec_postnummer":"","bestyrelsec_by":"","bestyrelsec_land":"DK","bestyrelsec_landenavn":"","bestyrelsed_cpr":"","bestyrelsed_adresse":"","bestyrelsed_postnummer":"","bestyrelsed_by":"","bestyrelsed_land":"DK","bestyrelsed_landenavn":"","bestyrelsee_cpr":"","bestyrelsee_adresse":"","bestyrelsee_postnummer":"","bestyrelsee_by":"","bestyrelsee_land":"DK","bestyrelsee_landenavn":"","bestyrelsef_cpr":"","bestyrelsef_adresse":"","bestyrelsef_postnummer":"","bestyrelsef_by":"","bestyrelsef_land":"DK","bestyrelsef_landenavn":""},"medarbejdere":{"medarbejdere_radio":"ja","medarbejdere_antal_radio":"1","medarbejdere_omfang":"ja"},"branche":{"branche_branche":"Almindelig rengøring i bygninger\n\n[81.21.00] - Branchen omfatter almindelig indvendig rengøring i bygninger.","reklamebeskyttelse_ja":true,"alkohol_bevilling":"","import_import":"","import_eksport":""},"moms":{"moms_radio":"Moms","moms_begge_begge":""},"selskabsoplysninger":{"selskab_radio":"ejera","selskab_gadenavn":"","selskab_adresse2":"","selskab_postnummer":"","selskab_by":"","selskab_tlf":"","selskab_mail":"","valgfri_tlf":"22118324","valgfri_mail":"dnnsbj@gmail.com"},"underskrift":{"ejera_radio":"","ejera_underskriver1_radio":"","ejera_underskriver1_underskriv":"","ejera_underskriver2_radio":"","ejera_underskriver2_underskriv":"","ejerb_radio":"","ejerb_underskriver1_radio":"","ejerb_underskriver1_underskriv":"","ejerb_underskriver2_radio":"","ejerb_underskriver2_underskriv":"","ejerc_radio":"","ejerc_underskriver1_radio":"","ejerc_underskriver1_underskriv":"","ejerc_underskriver2_radio":"","ejerc_underskriver2_underskriv":"","ejerd_radio":"","ejerd_underskriver1_radio":"","ejerd_underskriver1_underskriv":"","ejerd_underskriver2_radio":"","ejerd_underskriver2_underskriv":"","ejere_radio":"","ejere_underskriver1_radio":"","ejere_underskriver1_underskriv":"","ejere_underskriver2_radio":"","ejere_underskriver2_underskriv":"","ejerf_radio":"","ejerf_underskriver1_radio":"","ejerf_underskriver1_underskriv":"","ejerf_underskriver2_radio":"","ejerf_underskriver2_underskriv":""},"afslut":{}}')
+def CreatePowerToBind(jsondata):
+    provision = ""
+    if jsondata['typeledelse']['entostrenget_radio'] == "direktion" and jsondata['medlemmerledelse']['valg_direktorer'] == "1":
+        provision = "Selskabet tegnes af en direktør."
+
+    if jsondata['tegningsret']['direktion_vanskeligt_to'] == "endirektor" or jsondata['tegningsret']['direktion_vanskeligt_flere'] == "endirektor":
+        provision = "Selskabet tegnes af en direktør."
+
+    if jsondata['tegningsret']['direktion_vanskeligt_to'] == "todirektorer" or jsondata['tegningsret']['direktion_vanskeligt_flere'] == "todirektorer":
+        provision = "Selskabet tegnes af 2 direktører i forening."
+
+    if jsondata['tegningsret']['direktion_vanskeligt_flere'] == "samtlige":
+        provision = "Selskabet tegnes af den samlede direktion."
+
+    if jsondata['tegningsret']['bestyrelse_endirektor'] == "et":
+        provision = "Selskabet tegnes af bestyrelsens formand i forening med en direktør."
+    
+    if jsondata['tegningsret']['bestyrelse_endirektor'] == "to":
+        provision = "Selskabet tegnes af to bestyrelsesmedlemmer i forening."
+
+    if jsondata['tegningsret']['bestyrelse_endirektor'] == "tre":
+        provision = "Selskabet tegnes af den samlede bestyrelse."
+    return provision
