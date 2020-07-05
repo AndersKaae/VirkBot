@@ -4,9 +4,23 @@ from selenium.webdriver.support.select import Select
 import os
 import time
 import pickle
+import sys
 from data import *
 
-def browser(legalOwnerList, managementList, company, jsondata):
+def launchSelenium():
+    options = Options()
+	# Following two lines makes the chrome browser not show
+	#options.add_argument('--headless')
+	#options.add_argument('--disable-gpu')
+    
+    # Keeps browser open
+    options.add_experimental_option("detach", True)
+
+    #options.add_argument("--user-data-dir=chrome-data")
+    options.add_argument("user-data-dir=selenium") 
+    browser = webdriver.Chrome('./chromedriver', chrome_options=options)
+
+def browser(legalOwnerList, managementList, company, jsondata, email):
     options = Options()
 	# Following two lines makes the chrome browser not show
 	#options.add_argument('--headless')
@@ -36,9 +50,22 @@ def browser(legalOwnerList, managementList, company, jsondata):
     browser.get("https://erst.virk.dk/start/type/aps")
     browser.find_element_by_id('navn').send_keys(company.name + " " + company.companytype)
     
+    # Secondary name
+    for item in company.secondaryName:
+        print(item)
+        browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/fieldset[1]/div[3]/div[2]/input").click()
+        time.sleep(1)
+        browser.find_element_by_id('binavn_binavn').send_keys(item)
+        browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/fieldset[1]/div[3]/div[2]/div/div[2]/input[2]").click()
+
     # Inserting the adress
     browser.find_element_by_id('hjemstedsadresse_adresse').send_keys(company.adress + " , " + company.zipcode + " " + company.city)
-     
+    # See if there is a suggestions and clicks it.
+    try:
+        browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/fieldset[2]/div[1]/div/span/span[2]/div[1]/span/div").click()
+    except:
+        pass
+
     browser.find_element_by_id('obligatoriskEmail').send_keys(company.email)
     browser.find_element_by_id("reklamebeskyttelse").click()
     browser.find_element_by_id('stiftelsesdato').send_keys(company.signingDate)
@@ -89,6 +116,16 @@ def browser(legalOwnerList, managementList, company, jsondata):
     # Aktieklasser
     browser.find_element_by_id("false").click()
 
+    # Kapitalgodkendelse
+    if email != 'test@legaldesk.dk':
+        browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/div[1]/div[3]/fieldset/div[2]/input").click()
+        time.sleep(1)
+        browser.find_element_by_xpath('//*[@id="hentGodkendelseFraTredjepartSubmit"]').click()
+        time.sleep(2)
+        browser.find_element_by_id('kapitalIndskud_tredjepartsInvitationer[0]_email').send_keys(email)
+        browser.find_element_by_id("tilfoejGodkendelse").click()
+        time.sleep(1)
+
     # Regnskabsår
     browser.find_element_by_id('regnskab_regnskabsaar_startDato-field').send_keys(company.fiscalstart)
     browser.find_element_by_id('regnskab_regnskabsaar_slutDato-field').send_keys(company.fiscalend)
@@ -132,7 +169,7 @@ def browser(legalOwnerList, managementList, company, jsondata):
         time.sleep(1)
     browser.close()
     browser.quit()
-    return timeToExecute
+    return timeToExecute, ID
 
 def PopulateOwners(browser, jsondata, legalOwnerList):
     i = 0
@@ -140,12 +177,15 @@ def PopulateOwners(browser, jsondata, legalOwnerList):
         # Open dropdown
         time.sleep(1)
         browser.find_elements_by_class_name('btn-group')[0].click()
-
         # If Danish company
         if legalOwnerList[i].cvr != "":
             browser.find_elements_by_class_name('linkVrVirksomhed')[0].click()
             time.sleep(1)
             browser.find_element_by_id('stiftere_vrVirksomhed_vrNummer').send_keys(legalOwnerList[i].cvr)
+            if legalOwnerList[i].cvr == 'Indtast CVR-nummer':
+                while len(browser.find_element_by_id('stiftere_vrVirksomhed_vrNummer').get_attribute("value")) != 8:
+                    print(browser.find_element_by_id('stiftere_vrVirksomhed_vrNummer').get_attribute("value"))
+                    time.sleep(1)
 
         # If Danish person
         if legalOwnerList[i].cpr != "":

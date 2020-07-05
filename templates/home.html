@@ -1,26 +1,52 @@
 {% extends "layout.html" %}
 {% block content %}
-            <form action="/" method="post">
-                <div class="form-group"></div>
-                    <label for="cars">Choose a type of registration:</label>
-                    <select class="form-control" id="exampleFormControlSelect1">
-                        <option value="ApS">ApS</option>
-                    </select>
-                    <br>
-                    <label for="comment">JSON:</label>
-                    <textarea class="form-control" rows="10" name="textfield" value="Inser JSON" placeholder="Enter JSON"></textarea>
-                    <br>
-                    <label for="exampleInputEmail1">Who approves the capital?</label>
-                    <input type="email" class="form-control" name="emailfield" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter email">
-                    <br>
-                    <button type="submit" class="btn btn-primary btn-lg">Submit</button>
-                    {% with messages = get_flashed_messages() %}
-                        {% if messages %}
-                            {% for message in messages %}
-                                <p style="color: red">{{ message }}</p>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
-                </div>
-            </form>     
+
+<script>
+$(function() {
+    $('#vatsection').hide();
+    $('#chooseType').change(function(){
+        if($('#chooseType').val() == 'ApS') {
+            $('#emailsection').show();
+            $('#vatsection').hide();
+        } else {
+            $('#emailsection').hide();
+            $('#vatsection').show();
+        } 
+    });
+});
+</script>
+<form action="/" method="post">
+    <div class="form-group"></div>
+        <label for="cars">Choose a type of registration:</label>
+        <select class="form-control" name="dropdownitem" id="chooseType">
+            <option value="ApS">ApS</option>
+            <option value="Enkeltmandsvirksomhed">Enkeltmandsvirksomhed</option>
+        </select>
+        <br>
+        <label for="comment">JSON:</label>
+        <textarea class="form-control" rows="10" name="textfield" value="Inser JSON" placeholder="Enter JSON"></textarea>
+        <br>
+        <div id="emailsection">
+            <label for="exampleInputEmail1">Who approves the capital?</label>
+            <input type="email" class="form-control" name="emailfield" id="InputEmail" aria-describedby="emailHelp" placeholder="Enter email">
+            <small id="emailHelp" class="form-text text-muted">Use "test@legaldesk.dk" to avoid capital confirmation.</small>
+        </div>
+        <div id='vatsection'>
+            <label for="cars">Choose a Moms/Lønsum:</label>
+            <select class="form-control" id="vat" name="vat">
+                <option value="Moms">Moms</option>
+                <option value="Lønsum">Lønsum</option>
+            </select>
+        </div>
+        <br>
+        <button type="submit" class="btn btn-primary btn-lg">Submit</button>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <p style="color: red">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+</form>     
 {% endblock content %}

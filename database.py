@@ -26,5 +26,6 @@ def insertjson(json, email):
 def getjson():
 	query = session.query(Json_Data).order_by(Json_Data.id.desc()).first()
 	json = query.json
+	email = query.email
 	session.close()
-	return json
+	return json, email
