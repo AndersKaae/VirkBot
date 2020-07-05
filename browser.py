@@ -158,7 +158,6 @@ def BrowseCapitalCompany(browser, legalOwnerList, managementList, company, jsond
     browser.get(url="https://erst.virk.dk/start/" + ID + "/opsummering/index")
     
     timeToExecute = (time.time() - start_time)
-    print("--- %s seconds ---" % timeToExecute)
 
     while not "virksomhedsregistrering/registreringer" in browser.current_url:
         time.sleep(1)
