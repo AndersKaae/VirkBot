@@ -42,24 +42,26 @@ def BrowseCapitalCompany(browser, legalOwnerList, managementList, company, jsond
     
     # Secondary name
     for item in company.secondaryName:
-        print(item)
+        time.sleep(1)
         browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/fieldset[1]/div[3]/div[2]/input").click()
         time.sleep(1)
         browser.find_element_by_id('binavn_binavn').send_keys(item)
         browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/fieldset[1]/div[3]/div[2]/div/div[2]/input[2]").click()
 
     # Inserting the adress
-    browser.find_element_by_id('hjemstedsadresse_adresse').send_keys(company.adress + " , " + company.zipcode + " " + company.city)
+    browser.find_element_by_id('hjemstedsadresse_adresse').send_keys(company.validateadress)
     # See if there is a suggestions and clicks it.
+    time.sleep(1)
     try:
         browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/fieldset[2]/div[1]/div/span/span[2]/div[1]/span/div").click()
     except:
         pass
-    # See if there is error
 
-
+    # E-mail reklamebeskyttelse
     browser.find_element_by_id('obligatoriskEmail').send_keys(company.email)
     browser.find_element_by_id("reklamebeskyttelse").click()
+    
+    # Stiftelses og virkningsdato
     browser.find_element_by_id('stiftelsesdato').send_keys(company.signingDate)
     browser.find_element_by_id('virkningsdato').send_keys(company.effectDate)
 
@@ -124,6 +126,7 @@ def BrowseCapitalCompany(browser, legalOwnerList, managementList, company, jsond
 
     # Revisor
     if company.audited == False:
+        time.sleep(1)
         browser.find_element_by_id("FRAVALGT").click()
         time.sleep(1)
         browser.find_element_by_id("revision_accepteretErklaeringFravalgRevision").click()
@@ -234,3 +237,4 @@ def PopulateManagement(browser, jsondata, managementList):
             pass
         i+=1
     return i
+
