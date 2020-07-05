@@ -1,13 +1,14 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.select import Select
+from selenium.webdriver.common.keys import Keys
 import os
 import time
 import pickle
 import sys
 from data import *
 
-def launchSelenium():
+def LaunchSelenium():
     options = Options()
 	# Following two lines makes the chrome browser not show
 	#options.add_argument('--headless')
@@ -19,20 +20,9 @@ def launchSelenium():
     #options.add_argument("--user-data-dir=chrome-data")
     options.add_argument("user-data-dir=selenium") 
     browser = webdriver.Chrome('./chromedriver', chrome_options=options)
+    return browser
 
-def browser(legalOwnerList, managementList, company, jsondata, email):
-    options = Options()
-	# Following two lines makes the chrome browser not show
-	#options.add_argument('--headless')
-	#options.add_argument('--disable-gpu')
-    
-    # Keeps browser open
-    options.add_experimental_option("detach", True)
-
-    #options.add_argument("--user-data-dir=chrome-data")
-    options.add_argument("user-data-dir=selenium") 
-    browser = webdriver.Chrome('./chromedriver', chrome_options=options)
-
+def BrowseCapitalCompany(browser, legalOwnerList, managementList, company, jsondata, email):
     # Getting the first URL
     browser.get("https://indberet.virk.dk/nemlogin/login?f=/integration/ERST/Start_virksomhed")
 
@@ -65,6 +55,8 @@ def browser(legalOwnerList, managementList, company, jsondata, email):
         browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/fieldset[2]/div[1]/div/span/span[2]/div[1]/span/div").click()
     except:
         pass
+    # See if there is error
+
 
     browser.find_element_by_id('obligatoriskEmail').send_keys(company.email)
     browser.find_element_by_id("reklamebeskyttelse").click()
@@ -167,8 +159,6 @@ def browser(legalOwnerList, managementList, company, jsondata, email):
 
     while not "virksomhedsregistrering/registreringer" in browser.current_url:
         time.sleep(1)
-    browser.close()
-    browser.quit()
     return timeToExecute, ID
 
 def PopulateOwners(browser, jsondata, legalOwnerList):
@@ -182,7 +172,7 @@ def PopulateOwners(browser, jsondata, legalOwnerList):
             browser.find_elements_by_class_name('linkVrVirksomhed')[0].click()
             time.sleep(1)
             browser.find_element_by_id('stiftere_vrVirksomhed_vrNummer').send_keys(legalOwnerList[i].cvr)
-            if legalOwnerList[i].cvr == 'Indtast CVR-nummer':
+            if legalOwnerList[i].cvr == 'Indtast CVR-nummer <---':
                 while len(browser.find_element_by_id('stiftere_vrVirksomhed_vrNummer').get_attribute("value")) != 8:
                     print(browser.find_element_by_id('stiftere_vrVirksomhed_vrNummer').get_attribute("value"))
                     time.sleep(1)

@@ -26,8 +26,13 @@ def hello_world():
 @app.route('/processor')
 def processor():
     jsondata, email = getjson()
+    # Launching selenium
+    browser = LaunchSelenium()
     legalOwnerList, managementList, company, jsondata = JsonParser(jsondata)
-    time, ID = browser(legalOwnerList, managementList, company, jsondata, email)
+    time, ID = BrowseCapitalCompany(browser, legalOwnerList, managementList, company, jsondata, email)
+    # Closing selenium
+    browser.close()
+    browser.quit()
     return render_template('processor.html', time = time, ID = ID)
 
 if __name__ == '__main__':

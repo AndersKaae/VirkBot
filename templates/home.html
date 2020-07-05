@@ -13,6 +13,9 @@ $(function() {
             $('#vatsection').show();
         } 
     });
+    $( "#submit" ).click(function() {
+        $('#loadingModal').modal('show')
+    });
 });
 </script>
 <form action="/" method="post">
@@ -39,7 +42,7 @@ $(function() {
             </select>
         </div>
         <br>
-        <button type="submit" class="btn btn-primary btn-lg">Submit</button>
+        <button type="submit" class="btn btn-primary btn-lg" id=submit>Submit</button>
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 {% for message in messages %}
@@ -48,5 +51,21 @@ $(function() {
             {% endif %}
         {% endwith %}
     </div>
-</form>     
+</form>
+
+<div class="modal fade" id="loadingModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="exampleModalLabel">Loading...</h2>
+        </div>
+        <div class="modal-body">
+            <br><br><br>
+            <center><img src="/static/images/source.gif"></center>
+            <br><br><br><br>
+        </div>
+        
+      </div>
+    </div>
+  </div>
 {% endblock content %}

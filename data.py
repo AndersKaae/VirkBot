@@ -101,9 +101,9 @@ def CreateLegalOwners(jsondata):
             ownerList[i].city = jsondata['oplysninger']['ejer' + abc[i] + '_data_by']
             ownerList[i].city = jsondata['oplysninger']['ejer' + abc[i] + '_data_land']
         else: 
-            if jsondata['oplysninger']['ejer' + abc[i] + '_stiftelse'] == True:
-                ownerList[i].cvr = 'Indtast CVR-nummer'
-            else:    
+            if jsondata['oplysninger']['ejer' + abc[i] + '_stiftelse'] == True and jsondata['oplysninger']['ejer' + abc[i] + '_cvr'] == "":
+                ownerList[i].cvr = 'CVR-nummer mangler!'
+            else:
                 ownerList[i].cvr = jsondata['oplysninger']['ejer' + abc[i] + '_cvr']
             ownerList[i].adress = jsondata['oplysninger']['ejer' + abc[i] + '_adresse']
             ownerList[i].zipcode = jsondata['oplysninger']['ejer' + abc[i] + '_postnummer']
