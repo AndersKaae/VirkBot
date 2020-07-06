@@ -44,7 +44,7 @@ def BrowseCapitalCompany(browser, legalOwnerList, managementList, company, jsond
     for item in company.secondaryName:
         time.sleep(1)
         browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/fieldset[1]/div[3]/div[2]/input").click()
-        time.sleep(1)
+        time.sleep(2)
         browser.find_element_by_id('binavn_binavn').send_keys(item)
         browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/fieldset[1]/div[3]/div[2]/div/div[2]/input[2]").click()
 
