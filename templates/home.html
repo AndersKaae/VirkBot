@@ -3,14 +3,11 @@
 
 <script>
 $(function() {
-    $('#vatsection').hide();
     $('#chooseType').change(function(){
         if($('#chooseType').val() == 'ApS') {
             $('#emailsection').show();
-            $('#vatsection').hide();
         } else {
             $('#emailsection').hide();
-            $('#vatsection').show();
         } 
     });
     $( "#submit" ).click(function() {
@@ -22,8 +19,8 @@ $(function() {
     <div class="form-group"></div>
         <label for="cars">Choose a type of registration:</label>
         <select class="form-control" name="dropdownitem" id="chooseType">
-            <option value="ApS">ApS</option>
-            <option value="Enkeltmandsvirksomhed">Enkeltmandsvirksomhed</option>
+            <option value="ApS">Kapitalselskab</option>
+            <option value="Efterregistrering">Efterregistrering Kapitalselskab</option>
         </select>
         <br>
         <label for="comment">Document data:</label>
@@ -33,13 +30,6 @@ $(function() {
             <label for="exampleInputEmail1">Who approves the capital?</label>
             <input type="email" class="form-control" name="emailfield" id="InputEmail" aria-describedby="emailHelp" placeholder="Enter email">
             <small id="emailHelp" class="form-text text-muted">Use "test@legaldesk.dk" to avoid capital confirmation.</small>
-        </div>
-        <div id='vatsection'>
-            <label for="cars">Choose a Moms/Lønsum:</label>
-            <select class="form-control" id="vat" name="vat">
-                <option value="Moms">Moms</option>
-                <option value="Lønsum">Lønsum</option>
-            </select>
         </div>
         <br>
         <button type="submit" class="btn btn-primary btn-lg" id=submit>Submit</button>

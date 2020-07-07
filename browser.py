@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver import ActionChains
 import os
 import time
 import pickle
@@ -15,27 +16,100 @@ def LaunchSelenium():
 	#options.add_argument('--disable-gpu')
     
     # Keeps browser open
-    options.add_experimental_option("detach", True)
-
-    #options.add_argument("--user-data-dir=chrome-data")
-    options.add_argument("user-data-dir=selenium") 
+    #options.add_experimental_option("detach", True)
+    options.add_argument("user-data-dir=selenium")
     browser = webdriver.Chrome('./chromedriver', chrome_options=options)
     return browser
 
-def BrowseCapitalCompany(browser, legalOwnerList, managementList, company, jsondata, email):
+def Login(browser):
     # Getting the first URL
     browser.get("https://indberet.virk.dk/nemlogin/login?f=/integration/ERST/Start_virksomhed")
 
+    # Trying to login automatically
+    time.sleep(1)
+    #LoginWithKeyfile(browser)
+    #LoginWithNemID(browser, nemid, password)
+    
     # Letting the user login manually with NemID or key
     while not "virksomhedsregistrering/betingelser" in browser.current_url:
         time.sleep(1)
-    start_time = time.time()
+    
     browser.find_element_by_id("acceptBetingelser").click()
     browser.find_element_by_id("fortsaetButton").click()
 
     # If we don't sleep for 1 sec the page does not load for some reason
     time.sleep(1)
-    
+
+def LoginWithKeyfile(browser):
+    browser.find_element_by_xpath("/html/body/form/div[3]/div[1]/div/div/ul/li[2]/a/span[2]").click()
+    time.sleep(2)
+    action = ActionChains(browser)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.RETURN)
+    time.sleep(2)
+    action.send_keys('miro12sd')
+    action.move_by_offset(100, 100)
+    action.send_keys('miro12sd')
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.RETURN)
+    action.perform()
+
+def LoginWithNemID(browser):
+    action = ActionChains(browser) 
+    action.send_keys(nemid)
+    action.send_keys(Keys.TAB)
+    action.send_keys(password)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.ENTER)
+    time.sleep(1)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    action.send_keys(Keys.TAB)
+    time.sleep(1)
+    action.move_by_offset(100, 100)
+    action.send_keys(Keys.RETURN)
+    action.perform()
+
+def MainSubsequentReg(browser, company):
+    Login(browser)
+    start_time = time.time()
+    browser.get("https://erst.virk.dk/virksomhedsregistrering/aendring/")
+    browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/fieldset/div/input[1]").send_keys(company.name + " " + company.companytype)
+    browser.find_element_by_id('submitSearch').click()
+    time.sleep(2)
+    browser.find_element_by_id('filter').click()
+    time.sleep(600)
+
+def MainCapitalCompany(browser, legalOwnerList, managementList, company, jsondata, email):
+    Login(browser)
+
+    start_time = time.time()
+    browser.get("https://indberet.virk.dk/nemlogin/login?f=/integration/ERST/Start_virksomhed")
+
     # ----- Page 1 -----
     browser.get("https://erst.virk.dk/start/type/aps")
     browser.find_element_by_id('navn').send_keys(company.name + " " + company.companytype)
@@ -46,7 +120,7 @@ def BrowseCapitalCompany(browser, legalOwnerList, managementList, company, jsond
         browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/fieldset[1]/div[3]/div[2]/input").click()
         time.sleep(2)
         browser.find_element_by_id('binavn_binavn').send_keys(item)
-        browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/fieldset[1]/div[3]/div[2]/div/div[2]/input[2]").click()
+        
 
     # Inserting the adress
     browser.find_element_by_id('hjemstedsadresse_adresse').send_keys(company.validateadress)
@@ -78,7 +152,8 @@ def BrowseCapitalCompany(browser, legalOwnerList, managementList, company, jsond
     time.sleep(1)
     PopulateManagement(browser, jsondata, managementList)
     
-    browser.find_element_by_id("virknext").click()
+    time.sleep(2)
+    browser.get(url="https://erst.virk.dk/start/" + ID + "/formaal/index")
 
     # ----- Page 2 -----
     time.sleep(1)
@@ -159,8 +234,11 @@ def BrowseCapitalCompany(browser, legalOwnerList, managementList, company, jsond
     
     timeToExecute = (time.time() - start_time)
 
-    while not "virksomhedsregistrering/registreringer" in browser.current_url:
-        time.sleep(1)
+    try:
+        while not "virksomhedsregistrering/registreringer" in browser.current_url:
+            time.sleep(1)
+    except:
+        pass
     return timeToExecute, ID
 
 def PopulateOwners(browser, jsondata, legalOwnerList):

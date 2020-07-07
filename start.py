@@ -1,39 +1,51 @@
-from flask import Flask, render_template, flash, request, redirect, url_for
+from flask import Flask, render_template, flash, request, redirect, url_for, session
 import time
 from browser import *
 from webfunctions import *
 from data import *
-from database import *
+#from database import *
 
 app = Flask(__name__)
+app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 @app.route('/', methods=['GET', 'POST'])
-def hello_world():
+def home():
     if request.method == "POST": 
+        session['registrationstype'] = request.form['dropdownitem']
         if request.form.get('dropdownitem') == 'ApS':
             if JsonLoader(request.form['textfield']) != "" and request.form['emailfield'] != "":
-                insertjson(request.form['textfield'], request.form['emailfield'])
+                session['jsondata'] = request.form['textfield']
+                session['email'] = request.form['emailfield']
                 return redirect('/processor')
             else:
                 flash('Invalid JSON and/or e-mail')
-        if request.form.get('dropdownitem') == 'Enkeltmandsvirksomhed':
-            if JsonLoader(request.form['textfield']) != "" and request.form['vat'] != "":
-                pass
+        if request.form.get('dropdownitem') == 'Efterregistrering':
+            if JsonLoader(request.form['textfield']) != "":
+                session['jsondata'] = request.form['textfield']
+                return redirect('/processor')
             else:
                 flash('Invalid JSON')
     return render_template('home.html')
 
 @app.route('/processor')
 def processor():
-    jsondata, email = getjson()
-    # Launching selenium
     browser = LaunchSelenium()
-    legalOwnerList, managementList, company, jsondata = JsonParser(jsondata)
-    time, ID = BrowseCapitalCompany(browser, legalOwnerList, managementList, company, jsondata, email)
+    legalOwnerList, managementList, company, jsondata = JsonParser(session['jsondata'])
+    if session['registrationstype'] == 'ApS':
+        time, ID = MainCapitalCompany(browser, legalOwnerList, managementList, company, jsondata, session['email'])
+    if session['registrationstype'] == 'Efterregistrering':
+        MainSubsequentReg(browser, company)
     # Closing selenium
-    browser.close()
-    browser.quit()
+    try:
+        browser.close()
+        browser.quit()
+    except:
+        pass
     return render_template('processor.html', time = time, ID = ID)
+
+@app.route('/waiting')
+def waiting():
+    return render_template('waiting.html')
 
 if __name__ == '__main__':
     app.secret_key = 'super secret key'
