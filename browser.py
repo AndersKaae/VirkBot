@@ -1,8 +1,10 @@
+from datetime import date
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import ActionChains
+from bs4 import BeautifulSoup
 import os
 import time
 import pickle
@@ -96,13 +98,114 @@ def LoginWithNemID(browser):
 
 def MainSubsequentReg(browser, company):
     Login(browser)
+    
+    # Starting the timer
     start_time = time.time()
+
     browser.get("https://erst.virk.dk/virksomhedsregistrering/aendring/")
+    
+    # Searching for company name
     browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/fieldset/div/input[1]").send_keys(company.name + " " + company.companytype)
     browser.find_element_by_id('submitSearch').click()
     time.sleep(2)
     browser.find_element_by_id('filter').click()
-    time.sleep(600)
+    time.sleep(1)
+
+    # Figuring out where our company figures on the list and click the link
+    n = FindCompanyOnList(browser.page_source, company.name + " " + company.companytype)
+    browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/div/div[" + str(n) + "]/div[7]/div/a").click()
+    
+    # Getting the CVR number from the URL
+    company.cvr = browser.current_url[-8:]
+    browser.get(url="https://erst.virk.dk/virksomhedsregistrering/aendring/vis?handling=aendre&vrNummer=" + company.cvr)
+    
+    # Click on the VAT link
+    browser.find_element_by_id('pligter-link').click()
+    
+    # Getting the case ID from the URL
+    ID = browser.current_url[32:44]
+    
+    # VAT
+    if company.vat == True:
+        browser.find_element_by_id('moms_erValgt').click()
+        time.sleep(1)
+        browser.find_element_by_id('OMSAETNING_UNDER_55_MIO').click()
+        time.sleep(2)
+        today = date.today()
+        try:
+            browser.find_element_by_id('moms_nyStartdato').send_keys(today.strftime("%d-%m-%Y"))
+        except:
+            browser.refresh()
+            browser.find_element_by_id('moms_nyStartdato').send_keys(today.strftime("%d-%m-%Y"))
+
+    # Import
+    if company.imports == True:
+        browser.find_element_by_id('importpligt_erValgt').click()
+        time.sleep(1)
+        browser.find_element_by_id('importpligt_nyStartdato').send_keys(today.strftime("%d-%m-%Y"))
+
+    # Eksport
+    if company.exports == True:
+        browser.find_element_by_id('eksport_eksportValgt').click()
+        time.sleep(1)
+        browser.find_element_by_id('eksport_nyStartdato').send_keys(today.strftime("%d-%m-%Y"))
+
+    # Lønsumsafgift (missing information)
+    if company.lonsum == True:
+        browser.find_element_by_id('loensumspligtig_erValgt').click()
+        time.sleep(1)
+        browser.find_element_by_id('loensumspligtigValgt_true').click()
+        browser.find_element_by_id('loensumsmetode_nyStartdato').send_keys(today.strftime("%d-%m-%Y"))
+        while not "overblik/index" in browser.current_url:
+            time.sleep(1)
+    
+    if company.lonsum == True or company.exports == True or company.imports == True or company.vat == True:
+        browser.find_element_by_xpath("/html/body/form/div/div[2]/div[2]/div[4]/div/div/div/input[2]").click()
+
+    # Employer
+    if int(company.numberemployees) > 0:
+        browser.get(url="https://erst.virk.dk/aendringer/" + ID + "/ansaettelsesforhold/index")
+        browser.find_element_by_id('loen_erValgt').click()
+        time.sleep(1)
+        browser.find_element_by_id('ALMINDELIG_LOENUDBETALING').click()
+        time.sleep(1)
+        browser.find_element_by_id('askat_askatValgt').click()
+        time.sleep(1)
+        browser.find_element_by_id('antalansatte_antalansatte').send_keys(company.numberemployees)
+        browser.find_element_by_id('ambidrag_ambidragValgt').click()
+        browser.find_element_by_id('MAANEDLIG_AFREGNING').click()
+        browser.find_element_by_id('loen_nyStartdato').send_keys(today.strftime("%d-%m-%Y"))
+        
+        if company.more_than_nine == True:
+            browser.find_element_by_id('atp_atpValgt').click()
+            time.sleep(1)
+            browser.find_element_by_id('atp_nyStartdato').send_keys(today.strftime("%d-%m-%Y"))
+            time.sleep(1)
+            browser.find_element_by_xpath("/html/body/form/div/div[2]/div[2]/div[4]/div/div/div/input[2]").click()
+    
+    browser.get(url="https://erst.virk.dk/aendringer/" + ID + "/overblik/tilOpsummering/tilOpsummering-button")
+    
+    timeToExecute = (time.time() - start_time)
+    try:
+        while 'opsummering/index' in browser.current_url:
+            time.sleep(1)
+    except:
+        pass
+    return timeToExecute, ID
+
+def FindCompanyOnList(html, name):
+    html = html.split('<div id="searchResultHeader">')
+    html = html[1]
+    html = html.split('<h1 class="section">Dine virksomheder</h1>')
+    html = html[0]
+    results = html.split('<div class="row searchResult ">')
+    i = 1
+    for item in results:
+        if name in item:
+            print('YAY')
+            break
+        i+=1
+    return i
 
 def MainCapitalCompany(browser, legalOwnerList, managementList, company, jsondata, email):
     Login(browser)
@@ -314,4 +417,3 @@ def PopulateManagement(browser, jsondata, managementList):
             pass
         i+=1
     return i
-

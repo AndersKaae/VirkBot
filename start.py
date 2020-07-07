@@ -34,7 +34,7 @@ def processor():
     if session['registrationstype'] == 'ApS':
         time, ID = MainCapitalCompany(browser, legalOwnerList, managementList, company, jsondata, session['email'])
     if session['registrationstype'] == 'Efterregistrering':
-        MainSubsequentReg(browser, company)
+        time, ID = MainSubsequentReg(browser, company)
     # Closing selenium
     try:
         browser.close()

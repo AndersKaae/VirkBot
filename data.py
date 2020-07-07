@@ -3,9 +3,10 @@ import re
 import requests
 
 class Company:
-  def __init__(self, name, companytype, secondaryName, adress, adress2, zipcode, city, validateadress, email, advertising, signingDate, effectDate, purpose, powertobind, industrycode, capital, fiscalstart, fiscalend, audited, accountantname, accountantcvr):
+  def __init__(self, name, companytype, secondaryName, adress, adress2, zipcode, city, validateadress, email, advertising, signingDate, effectDate, purpose, powertobind, industrycode, capital, fiscalstart, fiscalend, audited, accountantname, accountantcvr, vat, lonsum, imports, exports, numberemployees, more_than_nine):
     self.name = name
     self.companytype = companytype
+    self.cvr = 'NULL'
     self.secondaryName = secondaryName
     self.adress = adress
     self.adress2 = adress2
@@ -25,6 +26,12 @@ class Company:
     self.audited = audited
     self.accountantname =  accountantname
     self.accountantcvr = accountantcvr
+    self.vat = vat
+    self.lonsum = lonsum
+    self.imports = imports
+    self.exports = exports
+    self.numberemployees = numberemployees
+    self.more_than_nine = more_than_nine
 
 class LegalOwner:
     def __init__(self, name, cpr, cvr, adress, zipcode, city, country):
@@ -240,7 +247,7 @@ def CreateBoard(jsondata, ownerList):
 
 def CreateCompany(jsondata, ownerList):
     # Instatiate the class
-    company = Company("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
+    company = Company("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
     abc = ["a", "b", "c", "d", "e", "f", "g"]
 
     # Name and type
@@ -323,6 +330,37 @@ def CreateCompany(jsondata, ownerList):
         company.audited = True
         company.accountantname = jsondata['arsrapport']['revisor_navn']
         company.accountantcvr = jsondata['arsrapport']['revisor_cvr']
+
+    # VAT / Lonsum
+    if jsondata['moms']['moms_begge_begge'] == True:
+        company.vat = True
+        company.lonsum = True
+    elif jsondata['moms']['moms_radio'] == 'Moms':
+        company.vat = True
+        company.lonsum = False
+    elif jsondata['moms']['moms_radio'] == 'Lønsum':
+        company.vat = False
+        company.lonsum = True
+    
+    # Imports / Exports
+    company.imports = False
+    company.exports = False
+    if jsondata['branche']['import_import'] == True:
+        company.imports = True
+    if jsondata['branche']['import_eksport'] == True:
+        company.exports = True
+
+    # Employees
+    if jsondata['medarbejdere']['medarbejdere_radio'] == 'nej':
+        company.numberemployees = 0
+    if jsondata['medarbejdere']['medarbejdere_radio'] == 'ja':
+        company.numberemployees = jsondata['medarbejdere']['medarbejdere_antal_radio']
+        if jsondata['medarbejdere']['medarbejdere_omfang'] == 'nej':
+            company.more_than_nine = False
+        if jsondata['medarbejdere']['medarbejdere_omfang'] == 'ja':
+            company.more_than_nine = True
+
+    print(company.__dict__)
     return company
 
 def CreatePowerToBind(jsondata):

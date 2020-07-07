@@ -1,10 +1,8 @@
 .DS_Store
 *.code-workspace
 .vscode/
-chromedriver
 __pycache__/
 Pipfile
 chrome-data/
 selenium/
-test.db
 virkcookies.pkl
