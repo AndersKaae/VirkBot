@@ -124,43 +124,45 @@ def MainSubsequentReg(browser, company):
     
     # Getting the case ID from the URL
     ID = browser.current_url[32:44]
-    
+
     # VAT
     if company.vat == True:
         browser.find_element_by_id('moms_erValgt').click()
         time.sleep(1)
         browser.find_element_by_id('OMSAETNING_UNDER_55_MIO').click()
         time.sleep(2)
-        today = date.today()
         try:
-            browser.find_element_by_id('moms_nyStartdato').send_keys(today.strftime("%d-%m-%Y"))
+            browser.find_element_by_id('moms_nyStartdato').send_keys(company.effectDate)
         except:
             browser.refresh()
-            browser.find_element_by_id('moms_nyStartdato').send_keys(today.strftime("%d-%m-%Y"))
+            browser.find_element_by_id('moms_nyStartdato').send_keys(company.effectDate)
 
     # Import
     if company.imports == True:
         browser.find_element_by_id('importpligt_erValgt').click()
         time.sleep(1)
-        browser.find_element_by_id('importpligt_nyStartdato').send_keys(today.strftime("%d-%m-%Y"))
+        browser.find_element_by_id('importpligt_nyStartdato').send_keys(company.effectDate)
 
     # Eksport
     if company.exports == True:
         browser.find_element_by_id('eksport_eksportValgt').click()
         time.sleep(1)
-        browser.find_element_by_id('eksport_nyStartdato').send_keys(today.strftime("%d-%m-%Y"))
+        browser.find_element_by_id('eksport_nyStartdato').send_keys(company.effectDate)
 
     # Lønsumsafgift (missing information)
     if company.lonsum == True:
         browser.find_element_by_id('loensumspligtig_erValgt').click()
         time.sleep(1)
         browser.find_element_by_id('loensumspligtigValgt_true').click()
-        browser.find_element_by_id('loensumsmetode_nyStartdato').send_keys(today.strftime("%d-%m-%Y"))
+        browser.find_element_by_id('loensumsmetode_nyStartdato').send_keys(company.effectDate)
         while not "overblik/index" in browser.current_url:
             time.sleep(1)
     
     if company.lonsum == True or company.exports == True or company.imports == True or company.vat == True:
-        browser.find_element_by_xpath("/html/body/form/div/div[2]/div[2]/div[4]/div/div/div/input[2]").click()
+        try:
+            browser.find_element_by_xpath("/html/body/form/div/div[2]/div[2]/div[4]/div/div/div/input[2]").click()
+        except:
+            browser.find_element_by_xpath("/html/body/form/div/div[2]/div[2]/div[5]/div/div/div/input[2]").click()
 
     # Employer
     if int(company.numberemployees) > 0:
@@ -174,12 +176,12 @@ def MainSubsequentReg(browser, company):
         browser.find_element_by_id('antalansatte_antalansatte').send_keys(company.numberemployees)
         browser.find_element_by_id('ambidrag_ambidragValgt').click()
         browser.find_element_by_id('MAANEDLIG_AFREGNING').click()
-        browser.find_element_by_id('loen_nyStartdato').send_keys(today.strftime("%d-%m-%Y"))
+        browser.find_element_by_id('loen_nyStartdato').send_keys(company.effectDate)
         
         if company.more_than_nine == True:
             browser.find_element_by_id('atp_atpValgt').click()
             time.sleep(1)
-            browser.find_element_by_id('atp_nyStartdato').send_keys(today.strftime("%d-%m-%Y"))
+            browser.find_element_by_id('atp_nyStartdato').send_keys(company.effectDate)
             time.sleep(1)
             browser.find_element_by_xpath("/html/body/form/div/div[2]/div[2]/div[4]/div/div/div/input[2]").click()
     
