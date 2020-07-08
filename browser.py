@@ -192,7 +192,7 @@ def MainSubsequentReg(browser, company):
         while 'opsummering/index' in browser.current_url:
             time.sleep(1)
     except:
-        pass
+        time.sleep(600)
     return timeToExecute, ID
 
 def FindCompanyOnList(html, name):
