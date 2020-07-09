@@ -217,6 +217,7 @@ def MainCapitalCompany(browser, legalOwnerList, managementList, company, jsondat
 
     # ----- Page 1 -----
     browser.get("https://erst.virk.dk/start/type/aps")
+    time.sleep(1)
     browser.find_element_by_id('navn').send_keys(company.name + " " + company.companytype)
     
     # Secondary name
