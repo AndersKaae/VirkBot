@@ -317,9 +317,9 @@ def MainCapitalCompany(browser, legalOwnerList, managementList, company, jsondat
         browser.find_element_by_id("revision_accepteretErklaeringFravalgRevision").click()
     else:
         browser.find_element_by_id("VALGT").click()
-        browser.find_element_by_linkText('Revisionsvirksomhed').click()
-        #browser.find_elements_by_class_name('btn-group')[0].click()
-        #browser.find_elements_by_class_name('linkCprPerson')[0].click()        
+        browser.execute_script("$('.submitVisRevisor2').click();return false")
+        browser.find_element_by_id('regnskab_regnskabsaar_slutDato-field').send_keys(company.accountantcvr)
+        browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/div[3]/span[1]/fieldset/div/div/div[2]/input[2]").click()
 
     #First Fiscal Year
     yearList = ["2025", "2024", "2023", "2022", "2021", "2020"]
