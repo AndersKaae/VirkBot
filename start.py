@@ -35,12 +35,7 @@ def processor():
         time, ID = MainCapitalCompany(browser, legalOwnerList, managementList, company, jsondata, session['email'])
     if session['registrationstype'] == 'Efterregistrering':
         time, ID = MainSubsequentReg(browser, company)
-    # Closing selenium
-    try:
-        browser.close()
-        browser.quit()
-    except:
-        pass
+    browser.quit()
     return render_template('processor.html', time = time, ID = ID)
 
 @app.route('/waiting')

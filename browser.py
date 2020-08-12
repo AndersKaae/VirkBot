@@ -314,7 +314,11 @@ def MainCapitalCompany(browser, legalOwnerList, managementList, company, jsondat
         time.sleep(1)
         browser.find_element_by_id("FRAVALGT").click()
         time.sleep(1)
-        browser.find_element_by_id("revision_accepteretErklaeringFravalgRevision").click()
+        try:
+            browser.find_element_by_id("revision_accepteretErklaeringFravalgRevision").click()
+        except:
+            time.sleep(1)
+            browser.find_element_by_id("revision_accepteretErklaeringFravalgRevision").click()
     else:
         browser.find_element_by_id("VALGT").click()
         browser.execute_script("$('.submitVisRevisor2').click();return false")
