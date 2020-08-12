@@ -216,7 +216,11 @@ def MainCapitalCompany(browser, legalOwnerList, managementList, company, jsondat
     browser.get("https://indberet.virk.dk/nemlogin/login?f=/integration/ERST/Start_virksomhed")
 
     # ----- Page 1 -----
-    browser.get("https://erst.virk.dk/start/type/aps")
+    browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/a").click()
+    time.sleep(1)
+    browser.find_element_by_xpath("//*[@id='start-aps-type']").click()
+    
+    #browser.get("https://erst.virk.dk/start/type/aps")
     time.sleep(1)
     browser.find_element_by_id('navn').send_keys(company.name + " " + company.companytype)
     
@@ -352,10 +356,11 @@ def PopulateOwners(browser, jsondata, legalOwnerList):
     while i < int(jsondata['ejere']['antalejer_radio']):
         # Open dropdown
         time.sleep(1)
-        browser.find_elements_by_class_name('btn-group')[0].click()
+
         # If Danish company
         if legalOwnerList[i].cvr != "":
-            browser.find_elements_by_class_name('linkVrVirksomhed')[0].click()
+            #browser.find_elements_by_class_name('linkVrVirksomhed')[0].click()
+            browser.execute_script("$('.submitVrVirksomhedStiftere').click();return false")
             time.sleep(1)
             browser.find_element_by_id('stiftere_vrVirksomhed_vrNummer').send_keys(legalOwnerList[i].cvr)
             if legalOwnerList[i].cvr == 'Indtast CVR-nummer <---':
@@ -365,7 +370,8 @@ def PopulateOwners(browser, jsondata, legalOwnerList):
 
         # If Danish person
         if legalOwnerList[i].cpr != "":
-            browser.find_elements_by_class_name('linkCprPerson')[0].click()
+            #browser.find_elements_by_class_name('linkCprPerson')[0].click()
+            browser.execute_script("$('.submitCprPersonStiftere').click();return false")
             time.sleep(1)
             browser.find_element_by_id('stiftere_cprPerson_navn').send_keys(legalOwnerList[i].name)
             browser.find_element_by_id('stiftere_cprPerson_cprNummer').send_keys(legalOwnerList[i].cpr)
