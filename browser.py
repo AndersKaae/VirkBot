@@ -383,11 +383,16 @@ def PopulateManagement(browser, jsondata, managementList):
     i = 0
     for item in managementList:
         time.sleep(1)
-        browser.find_elements_by_class_name('btn-group')[1].click()
-        browser.find_elements_by_class_name('linkCprPerson')[1].click()
-        
+        #browser.find_elements_by_class_name('btn-group')[1].click()
+        #browser.find_elements_by_class_name('linkCprPerson')[1].click()
+        browser.execute_script("$('.submitCprPersonLedelse').click();return false")
         time.sleep(1)
-        browser.find_element_by_id('ledelse_cprPerson_navn').send_keys(managementList[i].name)
+        try:
+            browser.find_element_by_id('ledelse_cprPerson_navn').send_keys(managementList[i].name)
+        except:
+            time.sleep(1)
+            browser.find_element_by_id('ledelse_cprPerson_navn').send_keys(managementList[i].name)
+
         browser.find_element_by_id('ledelse_cprPerson_cprNummer').send_keys(managementList[i].cpr)
         time.sleep(1)
 

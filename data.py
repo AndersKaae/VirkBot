@@ -331,8 +331,17 @@ def CreateCompany(jsondata, ownerList):
         company.accountantname = jsondata['arsrapport']['revisor_navn']
         company.accountantcvr = jsondata['arsrapport']['revisor_cvr']
 
-    # VAT / Lonsum
-    if jsondata['moms']['moms_begge_begge'] == True:
+    # VAT / Lonsum    
+    try:
+        if jsondata['moms']['moms_begge_begge'] == True:
+            moms_begge = True
+        else:
+            moms_begge = False
+    except:
+        moms_begge = False
+
+
+    if moms_begge == True:
         company.vat = True
         company.lonsum = True
     elif jsondata['moms']['moms_radio'] == 'Moms':
