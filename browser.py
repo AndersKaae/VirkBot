@@ -188,11 +188,10 @@ def MainSubsequentReg(browser, company):
     browser.get(url="https://erst.virk.dk/aendringer/" + ID + "/overblik/tilOpsummering/tilOpsummering-button")
     
     timeToExecute = (time.time() - start_time)
-    try:
-        while 'opsummering/index' in browser.current_url:
-            time.sleep(1)
-    except:
-        time.sleep(600)
+    
+    while 'opsummering/index' in browser.current_url:
+        time.sleep(1)
+        
     return timeToExecute, ID
 
 def FindCompanyOnList(html, name):
@@ -228,9 +227,10 @@ def MainCapitalCompany(browser, legalOwnerList, managementList, company, jsondat
     for item in company.secondaryName:
         time.sleep(1)
         browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/fieldset[1]/div[3]/div[2]/input").click()
+
         time.sleep(2)
         browser.find_element_by_id('binavn_binavn').send_keys(item)
-        
+        browser.find_element_by_xpath("/html/body/div[2]/div[2]/div[2]/form/fieldset[1]/div[3]/div[2]/div/div[2]/input[2]").click()
 
     # Inserting the adress
     browser.find_element_by_id('hjemstedsadresse_adresse').send_keys(company.validateadress)
