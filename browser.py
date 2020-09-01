@@ -10,6 +10,7 @@ import time
 import pickle
 import sys
 from data import *
+from webdriver_manager.chrome import ChromeDriverManager
 
 def LaunchSelenium():
     options = Options()
@@ -20,7 +21,8 @@ def LaunchSelenium():
     # Keeps browser open
     #options.add_experimental_option("detach", True)
     options.add_argument("user-data-dir=selenium")
-    browser = webdriver.Chrome('./chromedriver', chrome_options=options)
+    browser = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=options)
+    #browser = webdriver.Chrome('./chromedriver', chrome_options=options)
     return browser
 
 def Login(browser):
